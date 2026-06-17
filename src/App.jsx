@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowUp,
@@ -12,10 +12,26 @@ import {
   CornerDownLeft,
   Menu,
   MessageSquare,
-  Plus
+  Plus,
+  PanelLeftClose,
+  PanelLeft,
+  Star,
+  Pencil,
+  Check,
+  X,
+  MoreHorizontal,
+  Trash2,
+  ChevronsLeft,
+  ChevronsRight,
+  Pin,
+  PinOff,
+  Lightbulb,
+  Paperclip,
+  Brain,
+  Lock,
+  Zap
 } from 'lucide-react'
-import Login from './pages/Login.jsx'
-import Signup from './pages/Signup.jsx'
+import Auth from './pages/Auth.jsx'
 import logoSvg from './assets/logo.svg'
 import { supabase } from './lib/supabase'
 import ProfileModal from './components/ProfileModal.jsx'
@@ -169,26 +185,27 @@ function GenerativeCanvas({ className = '', interactionY = 0, isActive = false }
 /* ═══════════════════════════════════════════════════════════════════
    LOGO — Thread orb mark + sarvam.ai text
    ═══════════════════════════════════════════════════════════════════ */
-function Logo() {
+function Logo({ collapsed = false }) {
   return (
     <Link to="/" className="flex items-center gap-1.5 group cursor-pointer select-none no-underline">
       <img
         src={logoSvg}
         alt="Sarvam AI"
-        className="w-8 h-8 rounded-lg transition-transform duration-500 group-hover:scale-105"
+        className="w-8 h-8 rounded-lg transition-transform duration-500 group-hover:scale-105 shrink-0"
       />
-      <span className="text-[17px] font-semibold tracking-[-0.03em] text-ink">
-        sarvam<span className="text-coral">.ai</span>
-      </span>
+      {!collapsed && (
+        <span className="text-[17px] font-semibold tracking-[-0.03em] text-ink whitespace-nowrap">
+          sarvam<span style={{ color: '#D4690A' }}>.ai</span>
+        </span>
+      )}
     </Link>
   )
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   NAVBAR
+   PROFILE BUTTON
    ═══════════════════════════════════════════════════════════════════ */
-function Navbar({ session, onToggleSidebar, onOpenProfile }) {
-  const navigate = useNavigate()
+function ProfileButton({ session, onOpenProfile }) {
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
@@ -203,24 +220,40 @@ function Navbar({ session, onToggleSidebar, onOpenProfile }) {
   }, [session])
 
   return (
-    <nav id="main-navbar" className="fixed top-0 left-0 right-0 z-50 bg-paper/80 backdrop-blur-xl border-b border-edge/60">
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
-        <Logo />
-        <div className="flex items-center gap-4">
-          {session ? (
+    <button onClick={(e) => { e.stopPropagation(); onOpenProfile(); }} className="flex items-center justify-center w-8 h-8 rounded-full bg-coral/10 text-coral hover:bg-coral/20 transition-colors border border-coral/20 cursor-pointer overflow-hidden shrink-0">
+      {profile?.avatar_url ? (
+        <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+      ) : (
+        <span className="text-sm font-semibold">{(profile?.full_name || session?.user?.email)?.charAt(0).toUpperCase()}</span>
+      )}
+    </button>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NAVBAR
+   ═══════════════════════════════════════════════════════════════════ */
+function Navbar({ session, onOpenProfile, isSidebarOpen, sessionLoading }) {
+  const navigate = useNavigate()
+
+  // Navbar always spans full width now - sidebar overlays on top
+  return (
+    <nav id="main-navbar" className="fixed top-0 left-0 right-0 z-40 bg-paper/80 backdrop-blur-xl border-b border-edge/60">
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          {!session && !sessionLoading && (
             <>
-              <button onClick={onToggleSidebar} className="p-2 text-ink-muted hover:text-ink hover:bg-paper-warm rounded-full transition-colors md:hidden">
-                <Menu className="w-5 h-5" />
-              </button>
-              <button onClick={onOpenProfile} className="flex items-center justify-center w-8 h-8 rounded-full bg-coral/10 text-coral hover:bg-coral/20 transition-colors border border-coral/20 cursor-pointer overflow-hidden">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-sm font-semibold">{(profile?.full_name || session.user.email).charAt(0).toUpperCase()}</span>
-                )}
-              </button>
+              <Logo />
+              <div className="hidden md:flex items-center gap-6 ml-4">
+                <Link to="/" className="text-sm font-medium text-ink-muted hover:text-ink transition-colors no-underline">About Us</Link>
+                <Link to="/" className="text-sm font-medium text-ink-muted hover:text-ink transition-colors no-underline">Pricing</Link>
+                <Link to="/" className="text-sm font-medium text-ink-muted hover:text-ink transition-colors no-underline">API</Link>
+              </div>
             </>
-          ) : (
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          {!session && !sessionLoading && (
             <>
               <button
                 id="login-btn"
@@ -268,8 +301,9 @@ function TypingIndicator() {
 /* ═══════════════════════════════════════════════════════════════════
    CHAT MESSAGE — Editorial style
    ═══════════════════════════════════════════════════════════════════ */
-function ChatMessage({ message, index }) {
+function ChatMessage({ message, index, userProfile, session }) {
   const isUser = message.role === 'user'
+  const initial = (userProfile?.full_name || session?.user?.email || 'U').charAt(0).toUpperCase()
 
   return (
     <div
@@ -277,22 +311,23 @@ function ChatMessage({ message, index }) {
       style={{ animationDelay: `${index * 0.04}s`, opacity: 0 }}
     >
       <div className={`flex gap-4 py-5 ${isUser ? 'flex-row-reverse' : ''}`}>
-        {/* Indicator line instead of avatar */}
         <div className="shrink-0 flex flex-col items-center pt-1">
           {isUser ? (
-            <div className="w-7 h-7 rounded-full bg-ink text-paper flex items-center justify-center">
-              <User className="w-3.5 h-3.5" />
+            <div className="w-7 h-7 rounded-full bg-coral/10 text-coral flex items-center justify-center border border-coral/20 overflow-hidden">
+              {userProfile?.avatar_url ? (
+                <img src={userProfile.avatar_url} alt="You" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-semibold">{initial}</span>
+              )}
             </div>
           ) : (
             <img src={logoSvg} alt="Sarvam AI" className="w-7 h-7 rounded-full" />
           )}
-          {/* Thread line */}
           <div className={`w-[1.5px] flex-1 mt-2 rounded-full ${
             isUser ? 'bg-ink/8' : 'bg-gradient-to-b from-coral/30 to-transparent'
           }`} />
         </div>
 
-        {/* Content */}
         <div className={`flex-1 min-w-0 ${isUser ? 'text-right' : ''}`}>
           <span className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${
             isUser ? 'text-ink-muted' : 'accent-gradient-text'
@@ -307,7 +342,6 @@ function ChatMessage({ message, index }) {
         </div>
       </div>
 
-      {/* Separator */}
       {!isUser && (
         <div className="h-px bg-gradient-to-r from-transparent via-edge to-transparent ml-11" />
       )}
@@ -416,6 +450,30 @@ function HeroSection({ onSuggestionClick }) {
    ═══════════════════════════════════════════════════════════════════ */
 function PromptInput({ value, onChange, onSubmit, isLoading }) {
   const textareaRef = useRef(null)
+  const [tipIndex, setTipIndex] = useState(0)
+  const [tipFade, setTipFade] = useState(true)
+
+  const tips = useMemo(() => [
+    { text: 'Press', kbd: 'Enter', suffix: 'to send ·', kbd2: 'Shift+Enter', suffix2: 'for new line' },
+    { icon: Lightbulb, text: 'Try asking Sarvam to explain complex topics in simple terms' },
+    { icon: Paperclip, text: 'You can drag and drop files here to share with Sarvam' },
+    { icon: Star, text: 'Star your favourite chats to find them quickly later' },
+    { icon: Brain, text: 'Sarvam learns from your conversations to give better answers' },
+    { icon: Pencil, text: 'Hover on any chat to rename it for easy organization' },
+    { icon: Lock, text: 'Your conversations are private and encrypted end-to-end' },
+    { icon: Zap, text: 'Use the suggestion cards above for quick prompts' },
+  ], [])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipFade(false)
+      setTimeout(() => {
+        setTipIndex(prev => (prev + 1) % tips.length)
+        setTipFade(true)
+      }, 250)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [tips.length])
 
   useEffect(() => {
     const el = textareaRef.current
@@ -431,6 +489,8 @@ function PromptInput({ value, onChange, onSubmit, isLoading }) {
       onSubmit()
     }
   }
+
+  const tip = tips[tipIndex]
 
   return (
     <div className="w-full max-w-2xl mx-auto px-5 pb-5 sm:pb-6">
@@ -466,10 +526,20 @@ function PromptInput({ value, onChange, onSubmit, isLoading }) {
           )}
         </button>
       </div>
-
-      <p className="text-center text-ink-ghost text-[11px] mt-2.5 tracking-wide">
-        Press <kbd className="px-1.5 py-0.5 rounded bg-paper-warm border border-edge text-ink-muted text-[10px] font-mono">Enter</kbd> to send · <kbd className="px-1.5 py-0.5 rounded bg-paper-warm border border-edge text-ink-muted text-[10px] font-mono">Shift+Enter</kbd> for new line
-      </p>
+      <div className="text-center mt-2.5 h-5 overflow-hidden flex items-center justify-center">
+        <p className={`text-ink-ghost text-[11px] tracking-wide transition-all duration-250 flex items-center gap-1.5 ${tipFade ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+          {tip.kbd ? (
+            <>
+              {tip.text} <kbd className="px-1.5 py-0.5 rounded bg-paper-warm border border-edge text-ink-muted text-[10px] font-mono">{tip.kbd}</kbd> {tip.suffix} <kbd className="px-1.5 py-0.5 rounded bg-paper-warm border border-edge text-ink-muted text-[10px] font-mono">{tip.kbd2}</kbd> {tip.suffix2}
+            </>
+          ) : (
+            <>
+              {tip.icon && <tip.icon className="w-3 h-3 opacity-80" />}
+              {tip.text}
+            </>
+          )}
+        </p>
+      </div>
     </div>
   )
 }
@@ -498,57 +568,244 @@ function getAIResponse(userMessage) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   MAIN APP
+   CHAT ITEM — With star, rename, delete actions
    ═══════════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════════
-   SIDEBAR — Chat History
-   ═══════════════════════════════════════════════════════════════════ */
-function Sidebar({ isOpen, onClose, chats, activeChatId, onSelectChat, onNewChat }) {
+function ChatItem({ chat, isActive, collapsed, onSelect, onToggleFavourite, onRename, onDelete, idx }) {
+  const [showMenu, setShowMenu] = useState(false)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState(chat.title)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false)
+    }
+    if (showMenu) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showMenu])
+
+  const handleRenameSubmit = () => {
+    if (renameValue.trim() && renameValue.trim() !== chat.title) {
+      onRename(chat.id, renameValue.trim())
+    }
+    setIsRenaming(false)
+  }
+
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => onSelect(chat.id)}
+        title={chat.title}
+        className={`w-10 h-10 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 mx-auto ${
+          isActive ? 'bg-coral/10 text-coral' : 'text-ink-muted hover:bg-paper-warm hover:text-ink'
+        }`}
+      >
+        {chat.is_favourite ? <Star className="w-4 h-4 fill-current" /> : <MessageSquare className="w-4 h-4" />}
+      </button>
+    )
+  }
+
   return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-ink/20 backdrop-blur-sm z-40 md:hidden animate-fade-in"
-          onClick={onClose}
-        />
+    <div
+      className={`group sidebar-item ripple-container w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer animate-list-item relative ${
+        isActive
+          ? 'bg-coral/8 text-ink font-medium border border-coral/15'
+          : 'text-ink-soft hover:bg-paper-warm hover:text-ink border border-transparent'
+      }`}
+      style={{ animationDelay: `${idx * 0.04}s` }}
+      onClick={() => { if (!isRenaming) onSelect(chat.id) }}
+    >
+      {/* Chat icon */}
+      <MessageSquare className={`w-4 h-4 shrink-0 transition-colors duration-200 ${isActive ? 'text-coral' : ''}`} />
+
+      {/* Title or rename input */}
+      {isRenaming ? (
+        <div className="flex-1 flex items-center gap-1" onClick={e => e.stopPropagation()}>
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={e => setRenameValue(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleRenameSubmit(); if (e.key === 'Escape') setIsRenaming(false) }}
+            className="flex-1 bg-paper border border-edge rounded-lg px-2 py-1 text-xs outline-none focus:border-coral text-ink"
+          />
+          <button onClick={handleRenameSubmit} className="p-1 text-teal hover:bg-teal/10 rounded cursor-pointer"><Check className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setIsRenaming(false)} className="p-1 text-ink-muted hover:bg-paper-warm rounded cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      ) : (
+        <span className="truncate flex-1 text-left">{chat.title}</span>
       )}
-      
-      {/* Sidebar container */}
-      <div className={`fixed top-14 bottom-0 left-0 z-40 w-64 bg-paper-warm border-r border-edge transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static md:h-[calc(100vh-3.5rem)]`}>
-        <div className="p-4">
-          <button 
-            onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-4 py-2.5 bg-ink text-paper rounded-xl text-sm font-medium hover:bg-ink-soft transition-colors cursor-pointer"
+
+      {/* Inline action icons — visible on hover */}
+      {!isRenaming && (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsRenaming(true); setRenameValue(chat.title) }}
+            title="Rename"
+            className="p-1 rounded hover:bg-paper hover:text-ink text-ink-ghost transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            New Chat
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavourite(chat.id) }}
+            title={chat.is_favourite ? 'Unfavourite' : 'Favourite'}
+            className={`p-1 rounded transition-colors cursor-pointer ${
+              chat.is_favourite ? 'text-amber hover:bg-amber/10' : 'text-ink-ghost hover:bg-paper hover:text-amber'
+            }`}
+          >
+            <Star className={`w-3.5 h-3.5 ${chat.is_favourite ? 'fill-current' : ''}`} />
           </button>
         </div>
-        
-        <div className="flex-1 overflow-y-auto hide-scrollbar px-3 pb-4 space-y-1">
-          <div className="px-3 mb-2 text-xs font-semibold text-ink-muted uppercase tracking-wider">History</div>
-          {chats.length === 0 ? (
-            <div className="px-3 py-4 text-sm text-ink-muted/60 italic">No previous chats</div>
-          ) : (
-            chats.map(chat => (
-              <button
+      )}
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SIDEBAR — Always visible, collapsible
+   ═══════════════════════════════════════════════════════════════════ */
+function Sidebar({ isOpen, onToggle, onHoverOpen, onHoverClose, isPinned, chats, activeChatId, onSelectChat, onNewChat, session, onOpenProfile, onToggleFavourite, onRenameChat, onDeleteChat, userProfile }) {
+  const favouriteChats = chats.filter(c => c.is_favourite)
+  const recentChats = chats.filter(c => !c.is_favourite)
+  const initial = (userProfile?.full_name || session?.user?.email || 'U').charAt(0).toUpperCase()
+
+  return (
+    <div
+      className={`fixed inset-y-0 left-0 z-[60] border-r border-edge/40 sidebar-spring flex flex-col backdrop-blur-xl ${!isOpen ? 'sidebar-collapsed' : ''}`}
+      style={{ width: isOpen ? '288px' : '64px', boxShadow: '2px 0 16px rgba(0,0,0,0.04)', backgroundColor: 'rgba(243, 239, 233, 0.65)' }}
+      onMouseEnter={onHoverOpen}
+      onMouseLeave={onHoverClose}
+    >
+      {/* Logo Header */}
+      <div className={`h-14 flex items-center border-b border-edge/30 shrink-0 ${isOpen ? 'px-5 justify-start' : 'justify-center'}`}>
+        <Logo collapsed={!isOpen} />
+      </div>
+
+      {/* New Chat Button */}
+      <div className={`shrink-0 ${isOpen ? 'px-4 pt-4 pb-2' : 'px-2 pt-3 pb-2'}`}>
+        {isOpen ? (
+          <button
+            onClick={onNewChat}
+            className="new-chat-btn w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer border border-edge/60 text-ink"
+          >
+            <Plus className="w-4 h-4 transition-transform duration-300" />
+            New Chat
+          </button>
+        ) : (
+          <button
+            onClick={onNewChat}
+            title="New Chat"
+            className="toggle-btn w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-ink-muted hover:text-coral border border-edge/60 cursor-pointer"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Chat Lists */}
+      <div className="flex-1 overflow-y-auto hide-scrollbar px-2 pb-4 space-y-1 mt-1">
+        {/* Favourites */}
+        {favouriteChats.length > 0 && (
+          <>
+            {isOpen && <div className="px-2 mb-1 mt-1 text-[10px] font-semibold text-amber uppercase tracking-[0.12em] flex items-center gap-1.5"><Star className="w-3 h-3 fill-current" /> Favourites</div>}
+            {favouriteChats.map((chat, idx) => (
+              <ChatItem
                 key={chat.id}
-                onClick={() => onSelectChat(chat.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
-                  activeChatId === chat.id 
-                    ? 'bg-paper text-ink shadow-sm border border-edge/50' 
-                    : 'text-ink-soft hover:bg-paper/50 hover:text-ink border border-transparent'
-                }`}
-              >
-                <MessageSquare className="w-4 h-4 shrink-0" />
-                <span className="truncate flex-1 text-left">{chat.title}</span>
-              </button>
-            ))
+                chat={chat}
+                isActive={activeChatId === chat.id}
+                collapsed={!isOpen}
+                onSelect={onSelectChat}
+                onToggleFavourite={onToggleFavourite}
+                onRename={onRenameChat}
+                onDelete={onDeleteChat}
+                idx={idx}
+              />
+            ))}
+            {isOpen && <div className="h-px bg-edge/40 my-2 mx-2" />}
+          </>
+        )}
+
+        {/* Recent / All */}
+        {isOpen && <div className="px-2 mb-1 mt-1 text-[10px] font-semibold text-ink-muted uppercase tracking-[0.12em]">All Chats</div>}
+        {recentChats.length === 0 && favouriteChats.length === 0 ? (
+          isOpen ? (
+            <div className="px-3 py-6 text-center">
+              <MessageSquare className="w-8 h-8 text-ink-muted/30 mx-auto mb-2" />
+              <div className="text-sm text-ink-muted/60">No conversations yet</div>
+              <div className="text-[11px] text-ink-ghost mt-0.5">Start a new chat to begin</div>
+            </div>
+          ) : null
+        ) : (
+          recentChats.map((chat, idx) => (
+            <ChatItem
+              key={chat.id}
+              chat={chat}
+              isActive={activeChatId === chat.id}
+              collapsed={!isOpen}
+              onSelect={onSelectChat}
+              onToggleFavourite={onToggleFavourite}
+              onRename={onRenameChat}
+              onDelete={onDeleteChat}
+              idx={idx}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Bottom: Collapse toggle + Profile */}
+      <div className="border-t border-edge/30 shrink-0">
+        {/* Profile */}
+        {isOpen ? (
+          <div className="p-3 mx-2 mt-2 rounded-xl hover:bg-paper-warm transition-all cursor-pointer flex items-center gap-3 btn-press" onClick={onOpenProfile}>
+            <div className="w-8 h-8 rounded-full bg-coral/10 text-coral flex items-center justify-center border border-coral/20 overflow-hidden shrink-0">
+              {userProfile?.avatar_url ? (
+                <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-semibold">{initial}</span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-ink truncate">
+                  {userProfile?.full_name || session?.user?.email?.split('@')[0] || 'Profile'}
+                </span>
+                <span className="badge-hover shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-ink/5 text-ink-muted border border-edge/60">
+                  Free
+                </span>
+              </div>
+              <div className="text-[11px] text-ink-muted truncate">{session?.user?.email}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center py-2 mt-1">
+            <div onClick={onOpenProfile} className="w-10 h-10 flex items-center justify-center rounded-xl cursor-pointer hover:bg-paper-warm transition-colors" title="Profile">
+              <div className="w-8 h-8 rounded-full bg-coral/10 text-coral flex items-center justify-center border border-coral/20 overflow-hidden">
+                {userProfile?.avatar_url ? (
+                  <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-semibold">{initial}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pin/Unpin Toggle */}
+        <div className={`flex ${isOpen ? 'justify-between items-center px-4' : 'justify-center'} py-2 pb-3`}>
+          {isOpen && (
+            <span className="text-[10px] text-ink-ghost uppercase tracking-wider">
+              {isPinned ? 'Pinned' : 'Auto'}
+            </span>
           )}
+          <button
+            onClick={onToggle}
+            title={isPinned ? 'Unpin sidebar (auto mode)' : 'Pin sidebar open'}
+            className={`toggle-btn p-2 rounded-lg cursor-pointer transition-all duration-200 ${isPinned ? 'text-coral bg-coral/8 hover:bg-coral/15' : 'text-ink-muted hover:text-ink'}`}
+          >
+            {isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+          </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -557,11 +814,72 @@ function Sidebar({ isOpen, onClose, chats, activeChatId, onSelectChat, onNewChat
    ═══════════════════════════════════════════════════════════════════ */
 function Home() {
   const [session, setSession] = useState(null)
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarPinned, setIsSidebarPinned] = useState(false)
+  const [userProfile, setUserProfile] = useState(null)
   
   const [chats, setChats] = useState([])
   const [activeChatId, setActiveChatId] = useState(null)
+
+  // Hover auto-open/close timers
+  const hoverOpenTimer = useRef(null)
+  const hoverCloseTimer = useRef(null)
+
+  const handleHoverOpen = useCallback(() => {
+    if (isSidebarPinned) return
+    clearTimeout(hoverCloseTimer.current)
+    hoverOpenTimer.current = setTimeout(() => setIsSidebarOpen(true), 50)
+  }, [isSidebarPinned])
+
+  const handleHoverClose = useCallback(() => {
+    if (isSidebarPinned) return
+    clearTimeout(hoverOpenTimer.current)
+    hoverCloseTimer.current = setTimeout(() => setIsSidebarOpen(false), 80)
+  }, [isSidebarPinned])
+
+  const handleTogglePin = useCallback(() => {
+    setIsSidebarPinned(prev => {
+      if (prev) {
+        // Unpinning: close sidebar
+        setIsSidebarOpen(false)
+        return false
+      } else {
+        // Pinning: keep sidebar open
+        setIsSidebarOpen(true)
+        return true
+      }
+    })
+  }, [])
+
+  // Toggle favourite
+  const handleToggleFavourite = useCallback(async (chatId) => {
+    setChats(prev => prev.map(c => c.id === chatId ? { ...c, is_favourite: !c.is_favourite } : c))
+    // Persist to DB (best effort)
+    const chat = chats.find(c => c.id === chatId)
+    if (chat && session?.user) {
+      supabase.from('chats').update({ is_favourite: !chat.is_favourite }).eq('id', chatId).then(() => {})
+    }
+  }, [chats, session])
+
+  // Rename chat
+  const handleRenameChat = useCallback(async (chatId, newTitle) => {
+    setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c))
+    if (session?.user) {
+      supabase.from('chats').update({ title: newTitle }).eq('id', chatId).then(() => {})
+    }
+  }, [session])
+
+  // Delete chat
+  const handleDeleteChat = useCallback(async (chatId) => {
+    setChats(prev => prev.filter(c => c.id !== chatId))
+    if (activeChatId === chatId) { setActiveChatId(null) }
+    if (session?.user) {
+      await supabase.from('messages').delete().eq('chat_id', chatId)
+      await supabase.from('chats').delete().eq('id', chatId)
+    }
+  }, [session, activeChatId])
   
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -574,24 +892,32 @@ function Home() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      setSessionLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      setSessionLoading(false)
     })
     return () => subscription.unsubscribe()
   }, [])
 
-  // Fetch Chats Effect
+  // Fetch Chats & Profile Effect
   useEffect(() => {
     if (session?.user) {
       supabase.from('chats').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
         .then(({ data }) => {
           if (data) setChats(data)
         })
+      // Fetch profile once
+      supabase.from('profiles').select('full_name, avatar_url').eq('id', session.user.id).single()
+        .then(({ data }) => {
+          if (data) setUserProfile(data)
+        })
     } else {
       setChats([])
       setActiveChatId(null)
       setMessages([])
+      setUserProfile(null)
     }
   }, [session])
 
@@ -698,22 +1024,33 @@ function Home() {
 
       <Navbar 
         session={session} 
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
         onOpenProfile={() => setIsProfileOpen(true)} 
+        isSidebarOpen={isSidebarOpen}
+        sessionLoading={sessionLoading}
       />
 
+      {/* Sidebar — rendered at top level so its z-index works above navbar */}
+      {session && (
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          onToggle={handleTogglePin}
+          onHoverOpen={handleHoverOpen}
+          onHoverClose={handleHoverClose}
+          isPinned={isSidebarPinned}
+          chats={chats} 
+          activeChatId={activeChatId}
+          onSelectChat={(id) => { setActiveChatId(id); if (window.innerWidth < 768) setIsSidebarOpen(true) }}
+          onNewChat={handleNewChat}
+          session={session}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          onToggleFavourite={handleToggleFavourite}
+          onRenameChat={handleRenameChat}
+          onDeleteChat={handleDeleteChat}
+          userProfile={userProfile}
+        />
+      )}
+
       <div className="flex-1 flex pt-14 relative z-10">
-        {session && (
-          <Sidebar 
-            isOpen={isSidebarOpen} 
-            onClose={() => setIsSidebarOpen(false)} 
-            chats={chats} 
-            activeChatId={activeChatId}
-            onSelectChat={(id) => { setActiveChatId(id); if (window.innerWidth < 768) setIsSidebarOpen(false) }}
-            onNewChat={handleNewChat}
-          />
-        )}
-        
         <main className="flex-1 flex flex-col relative overflow-hidden">
         {hasMessages ? (
           /* ─── Chat Mode ─── */
@@ -722,7 +1059,7 @@ function Home() {
             <div className="flex-1 overflow-y-auto hide-scrollbar py-6">
               <div className="max-w-2xl mx-auto px-4 sm:px-5">
                 {messages.map((msg, i) => (
-                  <ChatMessage key={i} message={msg} index={i} />
+                  <ChatMessage key={i} message={msg} index={i} userProfile={userProfile} session={session} />
                 ))}
 
                 {isLoading && (
@@ -783,8 +1120,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/signup" element={<Auth />} />
       </Routes>
     </BrowserRouter>
   )
