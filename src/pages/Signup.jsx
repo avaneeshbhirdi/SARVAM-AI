@@ -214,6 +214,7 @@ export default function Signup() {
           {/* Google */}
           <button
             id="google-signup-btn"
+            onClick={handleGoogleSignup}
             className="w-full py-3 rounded-xl bg-card border border-edge text-ink text-[15px] font-medium hover:border-edge-strong hover:shadow-sm transition-all duration-300 cursor-pointer flex items-center justify-center gap-3 active:scale-[0.98] animate-fade-up"
             style={{ opacity: 0, animationDelay: '0.25s' }}
           >
