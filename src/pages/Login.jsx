@@ -31,12 +31,17 @@ export default function Login() {
   }
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
-    })
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      })
+      if (error) setErrorMsg(error.message)
+    } catch (err) {
+      setErrorMsg(err.message)
+    }
   }
 
   return (
