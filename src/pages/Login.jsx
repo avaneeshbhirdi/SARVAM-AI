@@ -1,18 +1,42 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setErrorMsg('')
     setIsLoading(true)
-    // Simulate login — replace with real auth
-    setTimeout(() => setIsLoading(false), 1500)
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    setIsLoading(false)
+
+    if (error) {
+      setErrorMsg(error.message)
+    } else {
+      navigate('/')
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    })
   }
 
   return (
@@ -43,6 +67,12 @@ export default function Login() {
               Log in to continue your conversation threads.
             </p>
           </div>
+
+          {errorMsg && (
+            <div className="mb-6 p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm animate-fade-up">
+              {errorMsg}
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 animate-fade-up" style={{ opacity: 0, animationDelay: '0.15s' }}>

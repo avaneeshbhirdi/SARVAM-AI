@@ -25,22 +25,12 @@
       <stop offset="0%" stop-color="#E8450E"/>
       <stop offset="100%" stop-color="#C73A0B"/>
     </linearGradient>
-    <!-- Radial glow for center -->
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#0EA5A0" stop-opacity="0.15"/>
-      <stop offset="70%" stop-color="#0EA5A0" stop-opacity="0.03"/>
-      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
-    </radialGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="512" height="512" rx="112" ry="112" fill="#0D0D0D"/>
-
-  <!-- Inner glow -->
-  <circle cx="256" cy="256" r="160" fill="url(#glow)"/>
+  <!-- Background: website paper color -->
+  <rect width="512" height="512" rx="112" ry="112" fill="#F7F6F3"/>
 
   <!-- === OUTER RING — Thread arcs (multiple concentric lines) === -->
-
   <!-- Ring thread 1 — outermost, coral -->
   <circle cx="256" cy="256" r="155" fill="none" stroke="url(#t1)" stroke-width="2.5" opacity="0.35"/>
   <circle cx="256" cy="256" r="150" fill="none" stroke="url(#t6)" stroke-width="3" opacity="0.5"/>
@@ -60,7 +50,7 @@
   <circle cx="256" cy="256" r="114" fill="none" stroke="url(#t5)" stroke-width="3" opacity="0.5"/>
   <circle cx="256" cy="256" r="110" fill="none" stroke="url(#t4)" stroke-width="2.5" opacity="0.3"/>
 
-  <!-- === WAVY THREAD ARCS — Add organic feel (top arcs) === -->
+  <!-- === WAVY THREAD ARCS === -->
   <path d="M120,220 Q180,100 256,95 Q332,100 392,220" fill="none" stroke="url(#t1)" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
   <path d="M115,230 Q178,105 256,100 Q334,105 397,230" fill="none" stroke="url(#t3)" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
 
@@ -68,15 +58,12 @@
   <path d="M120,292 Q180,412 256,417 Q332,412 392,292" fill="none" stroke="url(#t4)" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
   <path d="M115,282 Q178,407 256,412 Q334,407 397,282" fill="none" stroke="url(#t5)" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
 
-  <!-- === CROSS THREADS — Horizontal flowing lines through center === -->
+  <!-- === CROSS THREADS === -->
   <path d="M105,240 Q180,230 256,235 Q332,240 407,230" fill="none" stroke="url(#t1)" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
   <path d="M105,280 Q180,290 256,285 Q332,280 407,290" fill="none" stroke="url(#t4)" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
 
-  <!-- === EYES — Two soft vertical capsules === -->
-  <rect x="215" y="232" width="10" height="38" rx="5" ry="5" fill="#F7F6F3" opacity="0.95"/>
-  <rect x="287" y="232" width="10" height="38" rx="5" ry="5" fill="#F7F6F3" opacity="0.95"/>
-
-  <!-- Eye glow -->
-  <rect x="213" y="230" width="14" height="42" rx="7" ry="7" fill="#F7F6F3" opacity="0.08"/>
-  <rect x="285" y="230" width="14" height="42" rx="7" ry="7" fill="#F7F6F3" opacity="0.08"/>
+  <!-- === EYES === -->
+  <!-- Dark eyes on the light background -->
+  <rect x="215" y="232" width="10" height="38" rx="5" ry="5" fill="#0D0D0D" opacity="0.95"/>
+  <rect x="287" y="232" width="10" height="38" rx="5" ry="5" fill="#0D0D0D" opacity="0.95"/>
 </svg>

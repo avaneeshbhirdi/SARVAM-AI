@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowUp,
@@ -10,10 +10,15 @@ import {
   Image as ImageIcon,
   BrainCircuit,
   CornerDownLeft,
+  Menu,
+  MessageSquare,
+  Plus
 } from 'lucide-react'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import logoSvg from './assets/logo.svg'
+import { supabase } from './lib/supabase'
+import ProfileModal from './components/ProfileModal.jsx'
 
 /* ═══════════════════════════════════════════════════════════════════
    GENERATIVE CANVAS — Animated Wave Bars (Transient Senses inspired)
@@ -166,14 +171,14 @@ function GenerativeCanvas({ className = '', interactionY = 0, isActive = false }
    ═══════════════════════════════════════════════════════════════════ */
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2.5 group cursor-pointer select-none no-underline">
+    <Link to="/" className="flex items-center gap-1.5 group cursor-pointer select-none no-underline">
       <img
         src={logoSvg}
         alt="Sarvam AI"
         className="w-8 h-8 rounded-lg transition-transform duration-500 group-hover:scale-105"
       />
       <span className="text-[17px] font-semibold tracking-[-0.03em] text-ink">
-        sarvam<span className="text-ink-muted">.ai</span>
+        sarvam<span className="text-coral">.ai</span>
       </span>
     </Link>
   )
@@ -182,28 +187,57 @@ function Logo() {
 /* ═══════════════════════════════════════════════════════════════════
    NAVBAR
    ═══════════════════════════════════════════════════════════════════ */
-function Navbar() {
+function Navbar({ session, onToggleSidebar, onOpenProfile }) {
   const navigate = useNavigate()
+  const [profile, setProfile] = useState(null)
+
+  useEffect(() => {
+    if (session?.user) {
+      supabase.from('profiles').select('full_name, avatar_url').eq('id', session.user.id).single()
+        .then(({data}) => {
+           if (data) setProfile(data)
+        })
+    } else {
+      setProfile(null)
+    }
+  }, [session])
 
   return (
     <nav id="main-navbar" className="fixed top-0 left-0 right-0 z-50 bg-paper/80 backdrop-blur-xl border-b border-edge/60">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
         <Logo />
-        <div className="flex items-center gap-2">
-          <button
-            id="login-btn"
-            onClick={() => navigate('/login')}
-            className="px-4 py-2 rounded-full text-sm font-medium text-ink-soft hover:text-ink hover:bg-paper-warm border border-transparent hover:border-edge transition-all duration-300 cursor-pointer"
-          >
-            Log in
-          </button>
-          <button
-            id="signup-btn"
-            onClick={() => navigate('/signup')}
-            className="px-4 py-2 rounded-full bg-ink text-paper text-sm font-medium hover:bg-ink-soft transition-colors duration-300 cursor-pointer"
-          >
-            Sign up
-          </button>
+        <div className="flex items-center gap-4">
+          {session ? (
+            <>
+              <button onClick={onToggleSidebar} className="p-2 text-ink-muted hover:text-ink hover:bg-paper-warm rounded-full transition-colors md:hidden">
+                <Menu className="w-5 h-5" />
+              </button>
+              <button onClick={onOpenProfile} className="flex items-center justify-center w-8 h-8 rounded-full bg-coral/10 text-coral hover:bg-coral/20 transition-colors border border-coral/20 cursor-pointer overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-semibold">{(profile?.full_name || session.user.email).charAt(0).toUpperCase()}</span>
+                )}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                id="login-btn"
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 rounded-full text-sm font-medium text-ink-soft hover:text-ink hover:bg-paper-warm border border-transparent hover:border-edge transition-all duration-300 cursor-pointer"
+              >
+                Log in
+              </button>
+              <button
+                id="signup-btn"
+                onClick={() => navigate('/signup')}
+                className="px-4 py-2 rounded-full bg-ink text-paper text-sm font-medium hover:bg-ink-soft transition-colors duration-300 cursor-pointer"
+              >
+                Sign up
+              </button>
+            </>
+          )}
         </div>
       </div>
     </nav>
@@ -348,9 +382,9 @@ function HeroSection({ onSuggestionClick }) {
         {/* Headline */}
         <div className="mb-10 animate-fade-up" style={{ opacity: 0, animationDelay: '0.1s' }}>
           <h1 className="text-[clamp(2.2rem,6vw,4.2rem)] font-display font-normal leading-[1.05] tracking-[-0.03em] text-ink mb-4">
-            we think in{' '}
+            Imagine anything. Create{' '}
             <span className="italic accent-gradient-text animate-gradient-flow">
-              threads.
+              Sarvam
             </span>
           </h1>
           <p className="text-ink-muted text-[15px] sm:text-base max-w-sm mx-auto leading-relaxed">
@@ -467,9 +501,68 @@ function getAIResponse(userMessage) {
    MAIN APP
    ═══════════════════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════════════════
+   SIDEBAR — Chat History
+   ═══════════════════════════════════════════════════════════════════ */
+function Sidebar({ isOpen, onClose, chats, activeChatId, onSelectChat, onNewChat }) {
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-ink/20 backdrop-blur-sm z-40 md:hidden animate-fade-in"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar container */}
+      <div className={`fixed top-14 bottom-0 left-0 z-40 w-64 bg-paper-warm border-r border-edge transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static md:h-[calc(100vh-3.5rem)]`}>
+        <div className="p-4">
+          <button 
+            onClick={onNewChat}
+            className="w-full flex items-center gap-2 px-4 py-2.5 bg-ink text-paper rounded-xl text-sm font-medium hover:bg-ink-soft transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            New Chat
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto hide-scrollbar px-3 pb-4 space-y-1">
+          <div className="px-3 mb-2 text-xs font-semibold text-ink-muted uppercase tracking-wider">History</div>
+          {chats.length === 0 ? (
+            <div className="px-3 py-4 text-sm text-ink-muted/60 italic">No previous chats</div>
+          ) : (
+            chats.map(chat => (
+              <button
+                key={chat.id}
+                onClick={() => onSelectChat(chat.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
+                  activeChatId === chat.id 
+                    ? 'bg-paper text-ink shadow-sm border border-edge/50' 
+                    : 'text-ink-soft hover:bg-paper/50 hover:text-ink border border-transparent'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4 shrink-0" />
+                <span className="truncate flex-1 text-left">{chat.title}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    HOME PAGE — Chat interface
    ═══════════════════════════════════════════════════════════════════ */
 function Home() {
+  const [session, setSession] = useState(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  
+  const [chats, setChats] = useState([])
+  const [activeChatId, setActiveChatId] = useState(null)
+  
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -477,28 +570,115 @@ function Home() {
 
   const hasMessages = messages.length > 0
 
+  // Auth Effect
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Fetch Chats Effect
+  useEffect(() => {
+    if (session?.user) {
+      supabase.from('chats').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
+        .then(({ data }) => {
+          if (data) setChats(data)
+        })
+    } else {
+      setChats([])
+      setActiveChatId(null)
+      setMessages([])
+    }
+  }, [session])
+
+  // Fetch Messages Effect
+  useEffect(() => {
+    if (activeChatId) {
+      supabase.from('messages').select('*').eq('chat_id', activeChatId).order('created_at', { ascending: true })
+        .then(({ data }) => {
+          if (data) setMessages(data)
+        })
+    } else {
+      setMessages([])
+    }
+  }, [activeChatId])
+
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, isLoading])
 
-  const sendMessage = useCallback((text) => {
+  const handleSignOut = async () => {
+    setIsProfileOpen(false)
+    await supabase.auth.signOut()
+  }
+
+  const handleNewChat = () => {
+    setActiveChatId(null)
+    setMessages([])
+    if (window.innerWidth < 768) setIsSidebarOpen(false)
+  }
+
+  const sendMessage = useCallback(async (text) => {
     const trimmed = text.trim()
     if (!trimmed || isLoading) return
 
-    setMessages((prev) => [...prev, { role: 'user', content: trimmed }])
     setInput('')
     setIsLoading(true)
+    
+    let currentChatId = activeChatId
+    
+    // Optimistic UI
+    const newUserMsg = { role: 'user', content: trimmed, created_at: new Date().toISOString() }
+    setMessages((prev) => [...prev, newUserMsg])
 
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: getAIResponse(trimmed) },
-      ])
+    try {
+      if (!currentChatId && session?.user) {
+        // Create new chat
+        const title = trimmed.length > 30 ? trimmed.substring(0, 30) + '...' : trimmed
+        const { data: newChat, error: chatError } = await supabase
+          .from('chats')
+          .insert({ user_id: session.user.id, title })
+          .select()
+          .single()
+        
+        if (!chatError && newChat) {
+          currentChatId = newChat.id
+          setActiveChatId(currentChatId)
+          setChats(prev => [newChat, ...prev])
+        }
+      }
+
+      // Save user message to DB
+      if (currentChatId && session?.user) {
+        await supabase.from('messages').insert({ chat_id: currentChatId, role: 'user', content: trimmed })
+      }
+
+      // Get AI Response
+      const aiResponseText = getAIResponse(trimmed)
+      
+      // Simulate delay for demo
+      await new Promise(r => setTimeout(r, 1000 + Math.random() * 800))
+      
+      const newAiMsg = { role: 'assistant', content: aiResponseText, created_at: new Date().toISOString() }
+      setMessages((prev) => [...prev, newAiMsg])
+      
+      // Save AI message to DB
+      if (currentChatId && session?.user) {
+        await supabase.from('messages').insert({ chat_id: currentChatId, role: 'assistant', content: aiResponseText })
+      }
+      
+    } catch (err) {
+      console.error(err)
+    } finally {
       setIsLoading(false)
-    }, 1000 + Math.random() * 800)
-  }, [isLoading])
+    }
+  }, [isLoading, activeChatId, session])
 
   const handleSubmit = useCallback(() => {
     sendMessage(input)
@@ -511,12 +691,30 @@ function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-paper relative">
+      {isProfileOpen && <ProfileModal session={session} onClose={() => setIsProfileOpen(false)} onSignOut={handleSignOut} />}
+      
       {/* Subtle dot matrix background */}
       <div className="fixed inset-0 dot-matrix pointer-events-none" />
 
-      <Navbar />
+      <Navbar 
+        session={session} 
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
+        onOpenProfile={() => setIsProfileOpen(true)} 
+      />
 
-      <main className="relative flex-1 flex flex-col pt-14">
+      <div className="flex-1 flex pt-14 relative z-10">
+        {session && (
+          <Sidebar 
+            isOpen={isSidebarOpen} 
+            onClose={() => setIsSidebarOpen(false)} 
+            chats={chats} 
+            activeChatId={activeChatId}
+            onSelectChat={(id) => { setActiveChatId(id); if (window.innerWidth < 768) setIsSidebarOpen(false) }}
+            onNewChat={handleNewChat}
+          />
+        )}
+        
+        <main className="flex-1 flex flex-col relative overflow-hidden">
         {hasMessages ? (
           /* ─── Chat Mode ─── */
           <div className="flex-1 flex flex-col">
@@ -572,6 +770,7 @@ function Home() {
           </div>
         )}
       </main>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff, Check } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 const PASSWORD_RULES = [
   { label: 'At least 8 characters', test: (p) => p.length >= 8 },
@@ -15,12 +16,41 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [agreed, setAgreed] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setErrorMsg('')
     setIsLoading(true)
-    // Simulate signup — replace with real auth
-    setTimeout(() => setIsLoading(false), 1500)
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+        }
+      }
+    })
+
+    setIsLoading(false)
+
+    if (error) {
+      setErrorMsg(error.message)
+    } else {
+      // Success
+      navigate('/')
+    }
+  }
+
+  const handleGoogleSignup = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    })
   }
 
   const allRulesPassed = PASSWORD_RULES.every((r) => r.test(password))
@@ -53,6 +83,12 @@ export default function Signup() {
               Create your account and begin exploring.
             </p>
           </div>
+
+          {errorMsg && (
+            <div className="mb-6 p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm animate-fade-up">
+              {errorMsg}
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 animate-fade-up" style={{ opacity: 0, animationDelay: '0.15s' }}>
