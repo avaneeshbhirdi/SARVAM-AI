@@ -106,23 +106,21 @@ export default function Auth() {
       {/* Auth Card */}
       <div className="relative z-10 w-full max-w-[420px] animate-fade-up" style={{ opacity: 0, animationDelay: '0.1s' }}>
         <div className="bg-card rounded-3xl border border-edge/80 shadow-xl shadow-ink/[0.03] overflow-hidden">
-          
+
           {/* Mode Toggle Tabs */}
           <div className="flex border-b border-edge">
             <button
               onClick={() => switchMode('login')}
-              className={`flex-1 py-4 text-sm font-semibold tracking-wide transition-all cursor-pointer relative ${
-                !isSignup ? 'text-ink' : 'text-ink-muted hover:text-ink-soft'
-              }`}
+              className={`flex-1 py-4 text-sm font-semibold tracking-wide transition-all cursor-pointer relative ${!isSignup ? 'text-ink' : 'text-ink-muted hover:text-ink-soft'
+                }`}
             >
               Sign In
               {!isSignup && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-coral rounded-full" />}
             </button>
             <button
               onClick={() => switchMode('signup')}
-              className={`flex-1 py-4 text-sm font-semibold tracking-wide transition-all cursor-pointer relative ${
-                isSignup ? 'text-ink' : 'text-ink-muted hover:text-ink-soft'
-              }`}
+              className={`flex-1 py-4 text-sm font-semibold tracking-wide transition-all cursor-pointer relative ${isSignup ? 'text-ink' : 'text-ink-muted hover:text-ink-soft'
+                }`}
             >
               Sign Up
               {isSignup && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-coral rounded-full" />}
@@ -244,9 +242,8 @@ export default function Auth() {
                   <div className="flex gap-3 mt-2.5">
                     {PASSWORD_RULES.map((rule, i) => (
                       <div key={i} className="flex items-center gap-1.5">
-                        <div className={`w-3 h-3 rounded-full flex items-center justify-center transition-all duration-200 ${
-                          rule.test(password) ? 'bg-green-600 text-white' : 'bg-paper-warm border border-edge'
-                        }`}>
+                        <div className={`w-3 h-3 rounded-full flex items-center justify-center transition-all duration-200 ${rule.test(password) ? 'bg-green-600 text-white' : 'bg-paper-warm border border-edge'
+                          }`}>
                           {rule.test(password) && <Check className="w-2 h-2" />}
                         </div>
                         <span className={`text-[10px] transition-colors ${rule.test(password) ? 'text-green-600' : 'text-ink-ghost'}`}>
@@ -266,9 +263,8 @@ export default function Auth() {
                 <label htmlFor="auth-terms" className="flex items-start gap-2.5 cursor-pointer py-1">
                   <div className="relative mt-0.5">
                     <input id="auth-terms" type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="sr-only" />
-                    <div className={`rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
-                      agreed ? 'bg-green-600 border-green-600' : 'bg-paper border-edge hover:border-edge-strong'
-                    }`} style={{ width: '16px', height: '16px' }}>
+                    <div className={`rounded-md border-2 flex items-center justify-center transition-all duration-200 ${agreed ? 'bg-green-600 border-green-600' : 'bg-paper border-edge hover:border-edge-strong'
+                      }`} style={{ width: '16px', height: '16px' }}>
                       {agreed && <Check className="w-2.5 h-2.5 text-white" />}
                     </div>
                   </div>

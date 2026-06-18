@@ -246,6 +246,7 @@ function Navbar({ session, onOpenProfile, isSidebarOpen, sessionLoading }) {
               <Logo />
               <div className="hidden md:flex items-center gap-6 ml-4">
                 <Link to="/" className="text-sm font-medium text-ink-muted hover:text-ink transition-colors no-underline">About Us</Link>
+                <Link to="/" className="text-sm font-medium text-ink-muted hover:text-ink transition-colors no-underline">Features</Link>
                 <Link to="/" className="text-sm font-medium text-ink-muted hover:text-ink transition-colors no-underline">Pricing</Link>
                 <Link to="/" className="text-sm font-medium text-ink-muted hover:text-ink transition-colors no-underline">API</Link>
               </div>
@@ -397,6 +398,25 @@ function SuggestionCard({ icon: Icon, label, prompt, color, onClick, index }) {
         {prompt}
       </div>
     </button>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEW CHAT EMPTY STATE — For logged in users
+   ═══════════════════════════════════════════════════════════════════ */
+function NewChatEmptyState({ userProfile, session }) {
+  const firstName = userProfile?.full_name?.split(' ')[0] || session?.user?.email?.split('@')[0] || 'there'
+  
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 text-center animate-fade-in pb-16">
+      <div className="w-16 h-16 rounded-3xl bg-coral/10 text-coral flex items-center justify-center mb-6 shadow-inner shadow-coral/5 border border-coral/20">
+        <Sparkles className="w-8 h-8" />
+      </div>
+      <h1 className="text-3xl font-semibold tracking-tight text-ink mb-2">
+        Hi {firstName}, how can I help?
+      </h1>
+      <p className="text-ink-muted">Start a new conversation or ask me anything.</p>
+    </div>
   )
 }
 
@@ -1095,15 +1115,21 @@ function Home() {
             </div>
           </div>
         ) : (
-          /* ─── Welcome Mode ─── */
+          /* ─── Empty State (Landing vs New Chat) ─── */
           <div className="flex-1 flex flex-col">
-            <HeroSection onSuggestionClick={handleSuggestionClick} />
-            <PromptInput
-              value={input}
-              onChange={setInput}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-            />
+            {session ? (
+              <NewChatEmptyState userProfile={userProfile} session={session} />
+            ) : (
+              <HeroSection onSuggestionClick={handleSuggestionClick} />
+            )}
+            <div className={session ? "mt-auto" : ""}>
+              <PromptInput
+                value={input}
+                onChange={setInput}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
+            </div>
           </div>
         )}
       </main>
