@@ -793,6 +793,7 @@ function Sidebar({ isOpen, onToggle, onHoverOpen, onHoverClose, isPinned, chats,
    HOME PAGE — Chat interface
    ═══════════════════════════════════════════════════════════════════ */
 function Home() {
+  const navigate = useNavigate()
   const [session, setSession] = useState(null)
   const [sessionLoading, setSessionLoading] = useState(true)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -1003,13 +1004,21 @@ function Home() {
   }, [isLoading, activeChatId, session, messages])
 
   const handleSubmit = useCallback(() => {
+    if (!session?.user) {
+      navigate('/login')
+      return
+    }
     sendMessage(input)
-  }, [input, sendMessage])
+  }, [input, sendMessage, session, navigate])
 
   const handleSuggestionClick = useCallback((text) => {
+    if (!session?.user) {
+      navigate('/login')
+      return
+    }
     setInput(text)
     setTimeout(() => sendMessage(text), 120)
-  }, [sendMessage])
+  }, [sendMessage, session, navigate])
 
   return (
     <div className="min-h-screen flex flex-col bg-paper relative">
