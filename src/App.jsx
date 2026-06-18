@@ -546,28 +546,6 @@ function PromptInput({ value, onChange, onSubmit, isLoading }) {
   )
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   AI RESPONSES — Demo content
-   ═══════════════════════════════════════════════════════════════════ */
-const AI_RESPONSES = {
-  'Explain quantum computing in simple terms':
-    "Think of it this way.\n\nA classical bit is a light switch — it's either ON or OFF. A qubit is more like a dimmer switch spinning freely between every position at once. This is superposition.\n\nNow imagine two dimmer switches that are mysteriously linked across any distance. Turn one, and the other instantly responds. That's entanglement.\n\nQuantum computers harness these properties to explore vast solution spaces simultaneously. They excel at:\n\n• Breaking and creating encryption\n• Simulating molecular structures for drug discovery\n• Optimizing complex logistics and supply chains\n• Accelerating machine learning algorithms\n\nThey won't replace your laptop — they solve fundamentally different problems. Think of them as a specialized tool, like a telescope for computation.",
-
-  'Draft a professional email requesting a deadline extension':
-    "Subject: Request for Timeline Adjustment — [Project Name]\n\nHi [Name],\n\nI wanted to reach out proactively regarding the [Project Name] deadline on [Date].\n\nDuring the implementation phase, we identified [specific challenge] that requires additional attention to maintain the quality standards we've established. Rather than compromise on deliverable quality, I'd like to propose extending the timeline by [X days].\n\nCurrent progress:\n→ Phase 1: Complete\n→ Phase 2: 85% complete\n→ Phase 3: Pending (blocked by above)\n\nProposed new deadline: [New Date]\n\nI'm happy to provide daily progress updates and am available to discuss alternative approaches if the original timeline is firm.\n\nBest,\n[Your Name]",
-
-  'Build a Python REST API with FastAPI':
-    "Here's a production-ready structure:\n\n```python\nfrom fastapi import FastAPI, HTTPException\nfrom pydantic import BaseModel\nfrom typing import Optional\n\napp = FastAPI(title=\"Sarvam API\", version=\"1.0\")\n\nclass Item(BaseModel):\n    name: str\n    description: Optional[str] = None\n    price: float\n    in_stock: bool = True\n\ndb: dict[int, Item] = {}\n\n@app.post(\"/items/\", status_code=201)\ndef create(item: Item):\n    id = len(db) + 1\n    db[id] = item\n    return {\"id\": id, **item.model_dump()}\n\n@app.get(\"/items/{id}\")\ndef read(id: int):\n    if id not in db:\n        raise HTTPException(404, \"Not found\")\n    return db[id]\n\n@app.get(\"/items/\")\ndef list_all():\n    return [{\"id\": k, **v.model_dump()} for k, v in db.items()]\n```\n\nRun: `uvicorn main:app --reload`\nDocs: Visit `/docs` for auto-generated Swagger UI.",
-
-  'Compare React, Vue, and Svelte frameworks':
-    "Three philosophies, one goal.\n\nReact — The ecosystem giant\n→ Virtual DOM, JSX, \"just JavaScript\"\n→ 42KB gzipped · Massive community\n→ Best for: Large teams, complex apps, extensive library needs\n→ Trade-off: Boilerplate, decision fatigue\n\nVue — The progressive choice\n→ Template-based, reactive by default\n→ 33KB gzipped · Curated ecosystem\n→ Best for: Rapid prototyping, gradual adoption\n→ Trade-off: Smaller job market, less third-party variety\n\nSvelte — The compiler approach\n→ No virtual DOM, compiles to vanilla JS\n→ ~2KB runtime · Growing community\n→ Best for: Performance-critical apps, smaller bundles\n→ Trade-off: Younger ecosystem, fewer resources\n\nMy take: React for career versatility. Vue for developer happiness. Svelte for raw performance. All three are excellent — your choice depends on your constraints, not the framework's capabilities.",
-}
-
-function getAIResponse(userMessage) {
-  if (AI_RESPONSES[userMessage]) return AI_RESPONSES[userMessage]
-
-  return `You asked: "${userMessage.slice(0, 80)}${userMessage.length > 80 ? '...' : ''}"\n\nThis is a frontend demo — the neural threads are visualized, but I'm not yet connected to a reasoning backend.\n\nTry one of the suggestion cards to see a full response. When connected to your AI backend, I'll weave real-time threads of thought into every answer.`
-}
 
 /* ═══════════════════════════════════════════════════════════════════
    CHAT ITEM — With star, rename, delete actions
@@ -988,10 +966,23 @@ function Home() {
       }
 
       // Get AI Response
-      const aiResponseText = getAIResponse(trimmed)
-      
-      // Simulate delay for demo
-      await new Promise(r => setTimeout(r, 1000 + Math.random() * 800))
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: trimmed,
+          history: messages.map(msg => ({ role: msg.role, content: msg.content }))
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch AI response');
+      }
+
+      const data = await response.json();
+      const aiResponseText = data.reply || 'Sorry, I encountered an error.';
       
       const newAiMsg = { role: 'assistant', content: aiResponseText, created_at: new Date().toISOString() }
       setMessages((prev) => [...prev, newAiMsg])
@@ -1003,10 +994,13 @@ function Home() {
       
     } catch (err) {
       console.error(err)
+      // Display error as a system message or alert
+      const errorMsg = { role: 'assistant', content: 'There was an error communicating with the AI backend. Please try again.', created_at: new Date().toISOString() }
+      setMessages((prev) => [...prev, errorMsg])
     } finally {
       setIsLoading(false)
     }
-  }, [isLoading, activeChatId, session])
+  }, [isLoading, activeChatId, session, messages])
 
   const handleSubmit = useCallback(() => {
     sendMessage(input)
