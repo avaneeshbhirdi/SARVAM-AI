@@ -233,7 +233,7 @@ function ProfileButton({ session, onOpenProfile }) {
 /* ═══════════════════════════════════════════════════════════════════
    NAVBAR
    ═══════════════════════════════════════════════════════════════════ */
-function Navbar({ session, onOpenProfile, isSidebarOpen, sessionLoading }) {
+function Navbar({ session, onOpenProfile, isSidebarOpen, sessionLoading, onToggleSidebar }) {
   const navigate = useNavigate()
 
   // Navbar always spans full width now - sidebar overlays on top
@@ -241,6 +241,14 @@ function Navbar({ session, onOpenProfile, isSidebarOpen, sessionLoading }) {
     <nav id="main-navbar" className="fixed top-0 left-0 right-0 z-40 bg-paper/80 backdrop-blur-xl border-b border-edge/60">
       <div className="max-w-5xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
+          {session && !sessionLoading && (
+            <button
+              onClick={onToggleSidebar}
+              className="md:hidden p-2 -ml-2 text-ink-muted hover:text-ink transition-colors cursor-pointer"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
           {!session && !sessionLoading && (
             <>
               <Logo />
@@ -481,7 +489,8 @@ function PromptInput({ value, onChange, onSubmit, isLoading }) {
     const el = textareaRef.current
     if (el) {
       el.style.height = 'auto'
-      el.style.height = Math.min(el.scrollHeight, 180) + 'px'
+      const maxHeight = window.innerWidth < 768 ? 120 : 180
+      el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
     }
   }, [value])
 
@@ -643,18 +652,26 @@ function ChatItem({ chat, isActive, collapsed, onSelect, onToggleFavourite, onRe
 /* ═══════════════════════════════════════════════════════════════════
    SIDEBAR — Always visible, collapsible
    ═══════════════════════════════════════════════════════════════════ */
-function Sidebar({ isOpen, onToggle, onHoverOpen, onHoverClose, isPinned, chats, activeChatId, onSelectChat, onNewChat, session, onOpenProfile, onToggleFavourite, onRenameChat, onDeleteChat, userProfile }) {
+function Sidebar({ isOpen, onToggle, onHoverOpen, onHoverClose, isPinned, chats, activeChatId, onSelectChat, onNewChat, session, onOpenProfile, onToggleFavourite, onRenameChat, onDeleteChat, userProfile, onClose }) {
   const favouriteChats = chats.filter(c => c.is_favourite)
   const recentChats = chats.filter(c => !c.is_favourite)
   const initial = (userProfile?.full_name || session?.user?.email || 'U').charAt(0).toUpperCase()
 
   return (
-    <div
-      className={`fixed inset-y-0 left-0 z-[60] border-r border-edge/40 sidebar-spring flex flex-col backdrop-blur-xl ${!isOpen ? 'sidebar-collapsed' : ''}`}
-      style={{ width: isOpen ? '288px' : '64px', boxShadow: '2px 0 16px rgba(0,0,0,0.04)', backgroundColor: 'rgba(243, 239, 233, 0.65)' }}
-      onMouseEnter={onHoverOpen}
-      onMouseLeave={onHoverClose}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-ink/20 backdrop-blur-sm z-[50] md:hidden" 
+          onClick={onClose} 
+        />
+      )}
+      <div
+        className={`fixed inset-y-0 left-0 z-[60] border-r border-edge/40 sidebar-spring flex flex-col backdrop-blur-xl transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${!isOpen ? 'sidebar-collapsed' : ''}`}
+        style={{ width: isOpen ? '288px' : '64px', boxShadow: '2px 0 16px rgba(0,0,0,0.04)', backgroundColor: 'rgba(243, 239, 233, 0.65)' }}
+        onMouseEnter={onHoverOpen}
+        onMouseLeave={onHoverClose}
+      >
       {/* Logo Header */}
       <div className={`h-14 flex items-center border-b border-edge/30 shrink-0 ${isOpen ? 'px-5 justify-start' : 'justify-center'}`}>
         <Logo collapsed={!isOpen} />
@@ -786,6 +803,7 @@ function Sidebar({ isOpen, onToggle, onHoverOpen, onHoverClose, isPinned, chats,
         </div>
       </div>
     </div>
+    </>
   )
 }
 
@@ -1032,12 +1050,14 @@ function Home() {
         onOpenProfile={() => setIsProfileOpen(true)} 
         isSidebarOpen={isSidebarOpen}
         sessionLoading={sessionLoading}
+        onToggleSidebar={() => setIsSidebarOpen(true)}
       />
 
       {/* Sidebar — rendered at top level so its z-index works above navbar */}
       {session && (
         <Sidebar 
           isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
           onToggle={handleTogglePin}
           onHoverOpen={handleHoverOpen}
           onHoverClose={handleHoverClose}
