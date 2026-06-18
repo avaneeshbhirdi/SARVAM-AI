@@ -401,24 +401,6 @@ function SuggestionCard({ icon: Icon, label, prompt, color, onClick, index }) {
   )
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   NEW CHAT EMPTY STATE — For logged in users
-   ═══════════════════════════════════════════════════════════════════ */
-function NewChatEmptyState({ userProfile, session }) {
-  const firstName = userProfile?.full_name?.split(' ')[0] || session?.user?.email?.split('@')[0] || 'there'
-  
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 text-center animate-fade-in pb-16">
-      <div className="w-16 h-16 rounded-3xl bg-coral/10 text-coral flex items-center justify-center mb-6 shadow-inner shadow-coral/5 border border-coral/20">
-        <Sparkles className="w-8 h-8" />
-      </div>
-      <h1 className="text-3xl font-semibold tracking-tight text-ink mb-2">
-        Hi {firstName}, how can I help?
-      </h1>
-      <p className="text-ink-muted">Start a new conversation or ask me anything.</p>
-    </div>
-  )
-}
 
 /* ═══════════════════════════════════════════════════════════════════
    HERO — Editorial landing with generative background
@@ -1117,11 +1099,7 @@ function Home() {
         ) : (
           /* ─── Empty State (Landing vs New Chat) ─── */
           <div className="flex-1 flex flex-col">
-            {session ? (
-              <NewChatEmptyState userProfile={userProfile} session={session} />
-            ) : (
-              <HeroSection onSuggestionClick={handleSuggestionClick} />
-            )}
+            <HeroSection onSuggestionClick={handleSuggestionClick} />
             <div className={session ? "mt-auto" : ""}>
               <PromptInput
                 value={input}

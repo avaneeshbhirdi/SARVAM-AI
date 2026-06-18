@@ -115,7 +115,7 @@ export default function Auth() {
                 }`}
             >
               Sign In
-              {!isSignup && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-coral rounded-full" />}
+              {!isSignup && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-brand-blue rounded-full" />}
             </button>
             <button
               onClick={() => switchMode('signup')}
@@ -123,7 +123,7 @@ export default function Auth() {
                 }`}
             >
               Sign Up
-              {isSignup && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-coral rounded-full" />}
+              {isSignup && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-brand-blue rounded-full" />}
             </button>
           </div>
 
@@ -140,7 +140,7 @@ export default function Auth() {
             </div>
 
             {errorMsg && (
-              <div className="mb-5 p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm">
+              <div className="mb-5 p-3 rounded-xl bg-brand-blue/10 border border-brand-blue/20 text-brand-blue text-sm">
                 {errorMsg}
               </div>
             )}
@@ -183,7 +183,7 @@ export default function Auth() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Jane Doe"
                   tabIndex={isSignup ? 0 : -1}
-                  className="w-full px-4 py-2.5 rounded-xl bg-paper border border-edge text-ink text-sm placeholder-ink-ghost outline-none focus:border-coral/40 focus:shadow-[0_0_0_3px_rgba(232,69,14,0.06)] transition-all duration-200"
+                  className="w-full px-4 py-2.5 rounded-xl bg-paper border border-edge text-ink text-sm placeholder-ink-ghost outline-none focus:border-brand-blue/40 focus:shadow-[0_0_0_3px_rgba(10, 67, 197,0.06)] transition-all duration-200"
                 />
               </div>
 
@@ -199,7 +199,7 @@ export default function Auth() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-4 py-2.5 rounded-xl bg-paper border border-edge text-ink text-sm placeholder-ink-ghost outline-none focus:border-coral/40 focus:shadow-[0_0_0_3px_rgba(232,69,14,0.06)] transition-all duration-200"
+                  className="w-full px-4 py-2.5 rounded-xl bg-paper border border-edge text-ink text-sm placeholder-ink-ghost outline-none focus:border-brand-blue/40 focus:shadow-[0_0_0_3px_rgba(10, 67, 197,0.06)] transition-all duration-200"
                 />
               </div>
 
@@ -210,7 +210,7 @@ export default function Auth() {
                     Password
                   </label>
                   {!isSignup && (
-                    <button type="button" className="text-[11px] text-coral hover:text-coral/80 font-medium transition-colors cursor-pointer">
+                    <button type="button" className="text-[11px] text-brand-blue hover:text-brand-blue/80 font-medium transition-colors cursor-pointer">
                       Forgot?
                     </button>
                   )}
@@ -223,7 +223,7 @@ export default function Auth() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={isSignup ? 'Create a strong password' : '••••••••'}
                     required
-                    className="w-full px-4 py-2.5 pr-12 rounded-xl bg-paper border border-edge text-ink text-sm placeholder-ink-ghost outline-none focus:border-coral/40 focus:shadow-[0_0_0_3px_rgba(232,69,14,0.06)] transition-all duration-200"
+                    className="w-full px-4 py-2.5 pr-12 rounded-xl bg-paper border border-edge text-ink text-sm placeholder-ink-ghost outline-none focus:border-brand-blue/40 focus:shadow-[0_0_0_3px_rgba(10, 67, 197,0.06)] transition-all duration-200"
                   />
                   <button
                     type="button"
@@ -274,7 +274,7 @@ export default function Auth() {
                 </label>
               </div>
 
-              {/* Submit — same coral style for both modes */}
+              {/* Submit — same brand-blue style for both modes */}
               <button
                 type="submit"
                 disabled={isLoading || (isSignup && (!agreed || !allRulesPassed))}

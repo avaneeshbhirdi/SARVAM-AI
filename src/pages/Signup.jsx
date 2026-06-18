@@ -127,7 +127,7 @@ export default function Signup() {
           <Link to="/" className="flex items-center gap-2 no-underline">
             <img src={logoSvg} alt="Sarvam AI" className="w-8 h-8 rounded-lg" />
             <span className="text-[17px] font-semibold tracking-[-0.03em] text-ink">
-              sarvam<span className="text-coral">.ai</span>
+              sarvam<span className="text-brand-blue">.ai</span>
             </span>
           </Link>
         </div>
@@ -148,7 +148,7 @@ export default function Signup() {
               </div>
 
               {errorMsg && (
-                <div className="mb-5 p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm animate-fade-up">
+                <div className="mb-5 p-3 rounded-xl bg-brand-blue/10 border border-brand-blue/20 text-brand-blue text-sm animate-fade-up">
                   {errorMsg}
                 </div>
               )}
@@ -237,12 +237,12 @@ export default function Signup() {
                       {PASSWORD_RULES.map((rule, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-all duration-300 ${
-                            rule.test(password) ? 'bg-teal text-white' : 'bg-paper-warm border border-edge'
+                            rule.test(password) ? 'bg-brand-orange text-white' : 'bg-paper-warm border border-edge'
                           }`}>
                             {rule.test(password) && <Check className="w-2 h-2" />}
                           </div>
                           <span className={`text-[11px] transition-colors ${
-                            rule.test(password) ? 'text-teal' : 'text-ink-ghost'
+                            rule.test(password) ? 'text-brand-orange' : 'text-ink-ghost'
                           }`}>
                             {rule.label}
                           </span>
@@ -280,7 +280,7 @@ export default function Signup() {
                   id="signup-submit-btn"
                   type="submit"
                   disabled={isLoading || !agreed || !allRulesPassed}
-                  className="w-full py-3 rounded-xl accent-gradient text-white text-sm font-medium hover:opacity-90 transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] shadow-md shadow-coral/10 flex items-center justify-center gap-2 btn-press"
+                  className="w-full py-3 rounded-xl accent-gradient text-white text-sm font-medium hover:opacity-90 transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] shadow-md shadow-brand-blue/10 flex items-center justify-center gap-2 btn-press"
                 >
                   {isLoading ? 'Creating account...' : (
                     <>Create account <ArrowRight className="w-4 h-4" /></>
@@ -292,7 +292,7 @@ export default function Signup() {
             {/* Switch to login */}
             <p className="text-center text-ink-muted text-sm mt-6 animate-fade-up" style={{ opacity: 0, animationDelay: '0.3s' }}>
               Already have an account?{' '}
-              <Link to="/login" className="text-coral font-medium hover:underline">
+              <Link to="/login" className="text-brand-blue font-medium hover:underline">
                 Log in
               </Link>
             </p>

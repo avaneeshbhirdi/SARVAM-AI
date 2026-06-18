@@ -111,7 +111,7 @@ export default function Login() {
           <Link to="/" className="flex items-center gap-2 no-underline">
             <img src={logoSvg} alt="Sarvam AI" className="w-8 h-8 rounded-lg" />
             <span className="text-[17px] font-semibold tracking-[-0.03em] text-ink">
-              sarvam<span className="text-coral">.ai</span>
+              sarvam<span className="text-brand-blue">.ai</span>
             </span>
           </Link>
         </div>
@@ -132,7 +132,7 @@ export default function Login() {
               </div>
 
               {errorMsg && (
-                <div className="mb-5 p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm animate-fade-up">
+                <div className="mb-5 p-3 rounded-xl bg-brand-blue/10 border border-brand-blue/20 text-brand-blue text-sm animate-fade-up">
                   {errorMsg}
                 </div>
               )}
@@ -182,7 +182,7 @@ export default function Login() {
                     <label htmlFor="login-password" className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-muted">
                       Password
                     </label>
-                    <button type="button" className="text-[11px] text-coral hover:text-coral/80 font-medium transition-colors cursor-pointer">
+                    <button type="button" className="text-[11px] text-brand-blue hover:text-brand-blue/80 font-medium transition-colors cursor-pointer">
                       Forgot?
                     </button>
                   </div>
@@ -222,7 +222,7 @@ export default function Login() {
             {/* Switch to signup */}
             <p className="text-center text-ink-muted text-sm mt-6 animate-fade-up" style={{ opacity: 0, animationDelay: '0.3s' }}>
               New to Sarvam?{' '}
-              <Link to="/signup" className="text-coral font-medium hover:underline">
+              <Link to="/signup" className="text-brand-blue font-medium hover:underline">
                 Create an account
               </Link>
             </p>

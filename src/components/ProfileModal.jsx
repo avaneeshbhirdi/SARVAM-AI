@@ -158,7 +158,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                     activeTab === tab.id
-                      ? 'text-coral bg-coral/8 border border-coral/15'
+                      ? 'text-brand-blue bg-brand-blue/8 border border-brand-blue/15'
                       : 'text-ink-muted hover:text-ink hover:bg-paper border border-transparent'
                   }`}
                 >
@@ -172,7 +172,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
           <div className="p-3 border-t border-edge">
             <button
               onClick={onSignOut}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-coral hover:bg-coral/8 rounded-xl transition-colors cursor-pointer"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-brand-blue hover:bg-brand-blue/8 rounded-xl transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               Log out
@@ -198,7 +198,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
             <div className="space-y-6">
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 text-coral animate-spin" />
+                  <Loader2 className="w-6 h-6 text-brand-blue animate-spin" />
                 </div>
               ) : (
                 <>
@@ -225,7 +225,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
                         />
                       </label>
                     </div>
-                    {saving && <span className="text-xs text-coral animate-pulse">Uploading...</span>}
+                    {saving && <span className="text-xs text-brand-blue animate-pulse">Uploading...</span>}
                   </div>
 
                   {/* Form section */}
@@ -238,7 +238,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full bg-paper px-4 py-2.5 rounded-xl border border-edge focus:border-coral focus:ring-1 focus:ring-coral transition-all outline-none text-ink placeholder:text-ink-muted/50"
+                        className="w-full bg-paper px-4 py-2.5 rounded-xl border border-edge focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-all outline-none text-ink placeholder:text-ink-muted/50"
                         placeholder="Enter your name"
                       />
                     </div>
@@ -281,8 +281,8 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
 
               <div className="bg-paper-warm rounded-2xl border border-edge p-5 space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-coral/10 flex items-center justify-center shrink-0">
-                    <History className="w-5 h-5 text-coral" />
+                  <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center shrink-0">
+                    <History className="w-5 h-5 text-brand-blue" />
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium text-ink">Clear All History</div>
@@ -328,7 +328,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
 
               <div className="bg-paper-warm rounded-2xl border border-edge p-5 space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(45, 212, 191, 0.1)' }}>
+                  <div className="w-10 h-10 rounded-xl bg-brand-orange/10 flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(45, 212, 191, 0.1)' }}>
                     <Brain className="w-5 h-5" style={{ color: 'rgb(45, 212, 191)' }} />
                   </div>
                   <div className="flex-1">
@@ -390,19 +390,19 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
                   Recommended
                 </div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-5 h-5 text-coral" />
+                  <Sparkles className="w-5 h-5 text-brand-blue" />
                   <div>
                     <div className="text-xl font-bold text-ink">Pro</div>
                     <div className="text-sm text-ink-muted">₹499/month</div>
                   </div>
                 </div>
                 <div className="text-xs text-ink-soft space-y-1.5 mb-5">
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-coral" /> Unlimited messages</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-coral" /> Advanced AI model (GPT-4 level)</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-coral" /> Priority response speed</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-coral" /> Image generation</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-coral" /> Custom memory & personas</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-coral" /> Early access to new features</div>
+                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Unlimited messages</div>
+                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Advanced AI model (GPT-4 level)</div>
+                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Priority response speed</div>
+                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Image generation</div>
+                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Custom memory & personas</div>
+                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Early access to new features</div>
                 </div>
                 <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-paper bg-ink transition-all cursor-pointer hover:bg-ink-soft">
                   <Crown className="w-4 h-4" />
