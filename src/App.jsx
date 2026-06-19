@@ -333,42 +333,43 @@ function ChatMessage({ message, index, userProfile, session }) {
       className={`group ${isUser ? 'animate-slide-right' : 'animate-slide-left'}`}
       style={{ animationDelay: `${index * 0.04}s`, opacity: 0 }}
     >
-      <div className={`flex gap-4 py-5 ${isUser ? 'flex-row-reverse' : ''}`}>
-        <div className="shrink-0 flex flex-col items-center pt-1">
+      <div className={`flex gap-4 py-5 ${isUser ? 'justify-end' : ''}`}>
+        {!isUser && (
+          <div className="shrink-0 flex flex-col items-center pt-1">
+            <img src={logoSvg} alt="Sarvam AI" className="w-7 h-7 rounded-full" />
+            <div className="w-[1.5px] flex-1 mt-2 rounded-full bg-gradient-to-b from-coral/30 to-transparent" />
+          </div>
+        )}
+
+        <div className={`flex-1 min-w-0 flex flex-col ${isUser ? 'items-end' : ''}`}>
+          {!isUser && (
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] accent-gradient-text">
+              Sarvam
+            </span>
+          )}
+          
           {isUser ? (
-            <div className="w-7 h-7 rounded-full bg-coral/10 text-coral flex items-center justify-center border border-coral/20 overflow-hidden">
-              {userProfile?.avatar_url ? (
-                <img src={userProfile.avatar_url} alt="You" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-xs font-semibold">{initial}</span>
-              )}
+            <div className="bg-paper-warm border border-edge rounded-3xl px-5 py-3 max-w-[85%] text-[15px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
+              {message.content}
             </div>
           ) : (
-            <img src={logoSvg} alt="Sarvam AI" className="w-7 h-7 rounded-full" />
-          )}
-          <div className={`w-[1.5px] flex-1 mt-2 rounded-full ${
-            isUser ? 'bg-ink/8' : 'bg-gradient-to-b from-coral/30 to-transparent'
-          }`} />
-        </div>
-
-        <div className={`flex-1 min-w-0 ${isUser ? 'text-right' : ''}`}>
-          <span className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${
-            isUser ? 'text-ink-muted' : 'accent-gradient-text'
-          }`}>
-            {isUser ? 'You' : 'Sarvam'}
-          </span>
-          <div className={`mt-2 text-[15px] leading-[1.7] text-ink-soft break-words ${
-            isUser ? 'font-medium text-ink whitespace-pre-wrap' : 'markdown-body'
-          }`}>
-            {isUser ? (
-              message.content
-            ) : (
+            <div className="mt-2 text-[15px] leading-[1.7] text-ink-soft break-words markdown-body">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.content}
               </ReactMarkdown>
-            )}
-          </div>
-          {!isUser && (
+            </div>
+          )}
+
+          {isUser ? (
+            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 mr-2">
+              <button onClick={handleCopy} className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Copy prompt">
+                {copied ? <Check className="w-4 h-4 text-teal" /> : <Copy className="w-4 h-4" />}
+              </button>
+              <button className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Edit prompt">
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button onClick={handleCopy} className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Copy">
                 {copied ? <Check className="w-4 h-4 text-teal" /> : <Copy className="w-4 h-4" />}
