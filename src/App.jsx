@@ -357,8 +357,8 @@ function ChatMessage({ message, index, userProfile, session }) {
           }`}>
             {isUser ? 'You' : 'Sarvam'}
           </span>
-          <div className={`mt-2 text-[15px] leading-[1.7] text-ink-soft whitespace-pre-wrap break-words ${
-            isUser ? 'font-medium text-ink' : 'markdown-body'
+          <div className={`mt-2 text-[15px] leading-[1.7] text-ink-soft break-words ${
+            isUser ? 'font-medium text-ink whitespace-pre-wrap' : 'markdown-body'
           }`}>
             {isUser ? (
               message.content
