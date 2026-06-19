@@ -317,15 +317,25 @@ function TypingIndicator() {
 /* ═══════════════════════════════════════════════════════════════════
    CHAT MESSAGE — Editorial style
    ═══════════════════════════════════════════════════════════════════ */
-function ChatMessage({ message, index, userProfile, session }) {
+function ChatMessage({ message, index, userProfile, session, onEdit, onRegenerate }) {
   const isUser = message.role === 'user'
   const initial = (userProfile?.full_name || session?.user?.email || 'U').charAt(0).toUpperCase()
   const [copied, setCopied] = useState(false)
+  const [rating, setRating] = useState(null)
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: 'Sarvam AI Response', text: message.content }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(message.content)
+      alert("Response copied to clipboard for sharing!")
+    }
   }
 
   return (
@@ -365,7 +375,7 @@ function ChatMessage({ message, index, userProfile, session }) {
               <button onClick={handleCopy} className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Copy prompt">
                 {copied ? <Check className="w-4 h-4 text-teal" /> : <Copy className="w-4 h-4" />}
               </button>
-              <button className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Edit prompt">
+              <button onClick={() => onEdit(message.content)} className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Edit prompt">
                 <Pencil className="w-4 h-4" />
               </button>
             </div>
@@ -374,19 +384,19 @@ function ChatMessage({ message, index, userProfile, session }) {
               <button onClick={handleCopy} className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Copy">
                 {copied ? <Check className="w-4 h-4 text-teal" /> : <Copy className="w-4 h-4" />}
               </button>
-              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Like">
-                <ThumbsUp className="w-4 h-4" />
+              <button onClick={() => setRating(rating === 'up' ? null : 'up')} className={`p-1.5 rounded-lg hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer ${rating === 'up' ? 'text-teal bg-teal/10' : 'text-ink-muted'}`} title="Like">
+                <ThumbsUp className={`w-4 h-4 ${rating === 'up' ? 'fill-current' : ''}`} />
               </button>
-              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Dislike">
-                <ThumbsDown className="w-4 h-4" />
+              <button onClick={() => setRating(rating === 'down' ? null : 'down')} className={`p-1.5 rounded-lg hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer ${rating === 'down' ? 'text-coral bg-coral/10' : 'text-ink-muted'}`} title="Dislike">
+                <ThumbsDown className={`w-4 h-4 ${rating === 'down' ? 'fill-current' : ''}`} />
               </button>
-              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Share">
+              <button onClick={handleShare} className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Share">
                 <Share className="w-4 h-4" />
               </button>
-              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Regenerate">
+              <button onClick={onRegenerate} className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Regenerate">
                 <RotateCcw className="w-4 h-4" />
               </button>
-              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="More">
+              <button onClick={() => alert("More options coming soon!")} className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="More">
                 <MoreHorizontal className="w-4 h-4" />
               </button>
             </div>
@@ -1127,7 +1137,23 @@ function Home() {
             <div className="flex-1 overflow-y-auto hide-scrollbar py-6">
               <div className="max-w-4xl mx-auto px-4 sm:px-5">
                 {messages.map((msg, i) => (
-                  <ChatMessage key={i} message={msg} index={i} userProfile={userProfile} session={session} />
+                  <ChatMessage 
+                    key={i} 
+                    message={msg} 
+                    index={i} 
+                    userProfile={userProfile} 
+                    session={session} 
+                    onEdit={(content) => {
+                      setInput(content)
+                      document.getElementById('main-prompt-input')?.focus()
+                    }}
+                    onRegenerate={() => {
+                      const userMsg = messages.slice(0, i).reverse().find(m => m.role === 'user')
+                      if (userMsg) {
+                        sendMessage(userMsg.content)
+                      }
+                    }}
+                  />
                 ))}
 
                 {isLoading && (
