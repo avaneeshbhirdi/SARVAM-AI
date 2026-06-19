@@ -37,6 +37,8 @@ import {
   RotateCcw
 } from 'lucide-react'
 import Auth from './pages/Auth.jsx'
+import Subscription from './pages/Subscription.jsx'
+import Payment from './pages/Payment.jsx'
 import logoSvg from './assets/logo.svg'
 import { supabase } from './lib/supabase'
 import ProfileModal from './components/ProfileModal.jsx'
@@ -620,6 +622,20 @@ function PromptInput({ value, onChange, onSubmit, isLoading }) {
           )}
         </button>
       </div>
+      
+      {/* Media buttons mock */}
+      <div className="flex items-center justify-center gap-4 mt-3">
+        <button className="flex items-center gap-1.5 text-[11px] font-medium text-ink-muted hover:text-ink transition-colors cursor-pointer" title="Generate Image">
+          <ImageIcon className="w-3.5 h-3.5" /> Image
+        </button>
+        <button className="flex items-center gap-1.5 text-[11px] font-medium text-ink-muted hover:text-ink transition-colors cursor-pointer" title="Voice Input/Output">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg> Audio
+        </button>
+        <button className="flex items-center gap-1.5 text-[11px] font-medium text-ink-muted hover:text-ink transition-colors cursor-pointer" title="Generate Video">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg> Video
+        </button>
+      </div>
+
       <div className="text-center mt-2.5 h-5 overflow-hidden flex items-center justify-center">
         <p className={`text-ink-ghost text-[11px] tracking-wide transition-all duration-250 flex items-center gap-1.5 ${tipFade ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
           {tip.kbd ? (
@@ -849,7 +865,7 @@ function Sidebar({ isOpen, onToggle, onHoverOpen, onHoverClose, isPinned, chats,
                   {userProfile?.full_name || session?.user?.email?.split('@')[0] || 'Profile'}
                 </span>
                 <span className="badge-hover shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-ink/5 text-ink-muted border border-edge/60">
-                  Free
+                  {userProfile?.plan ? userProfile.plan.toUpperCase() : 'FREE'}
                 </span>
               </div>
               <div className="text-[11px] text-ink-muted truncate">{session?.user?.email}</div>
@@ -991,7 +1007,7 @@ function Home() {
           if (data) setChats(data)
         })
       // Fetch profile once
-      supabase.from('profiles').select('full_name, avatar_url').eq('id', session.user.id).single()
+      supabase.from('profiles').select('full_name, avatar_url, plan').eq('id', session.user.id).single()
         .then(({ data }) => {
           if (data) setUserProfile(data)
         })
@@ -1077,10 +1093,12 @@ function Home() {
       }
 
       // Get AI Response
-      const response = await fetch('http://localhost:5001/api/chat', {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           message: trimmed,
@@ -1088,11 +1106,19 @@ function Home() {
         })
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch AI response');
+        if (response.status === 403) {
+          const limitMsg = { role: 'assistant', content: `**Limit Reached.** ${data.error} [View Subscription Plans](/subscription)`, created_at: new Date().toISOString() }
+          setMessages((prev) => [...prev, limitMsg])
+        } else {
+          throw new Error('Failed to fetch AI response');
+        }
+        setIsLoading(false)
+        return
       }
 
-      const data = await response.json();
       const aiResponseText = data.reply || 'Sorry, I encountered an error.';
       
       const newAiMsg = { role: 'assistant', content: aiResponseText, created_at: new Date().toISOString() }
@@ -1258,6 +1284,8 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/signup" element={<Auth />} />
+        <Route path="/subscription" element={<Subscription />} />
+        <Route path="/payment" element={<Payment />} />
       </Routes>
     </BrowserRouter>
   )

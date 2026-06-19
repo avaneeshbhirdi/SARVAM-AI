@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { X, Upload, Loader2, LogOut, History, Brain, Crown, Trash2, ChevronRight, Check, Sparkles } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -10,11 +11,13 @@ const TABS = [
 ]
 
 export default function ProfileModal({ session, onClose, onSignOut }) {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [fullName, setFullName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [currentPlan, setCurrentPlan] = useState('free')
   const [clearingHistory, setClearingHistory] = useState(false)
   const [clearingMemory, setClearingMemory] = useState(false)
   const [historyCleared, setHistoryCleared] = useState(false)
@@ -28,7 +31,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select(`full_name, avatar_url`)
+        .select(`full_name, avatar_url, plan`)
         .eq('id', user.id)
         .single()
 
@@ -36,6 +39,7 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
         if (data) {
           setFullName(data.full_name || '')
           setAvatarUrl(data.avatar_url || '')
+          setCurrentPlan(data.plan || 'free')
         }
         setLoading(false)
       }
@@ -366,53 +370,35 @@ export default function ProfileModal({ session, onClose, onSignOut }) {
           {/* ─── SUBSCRIPTION TAB ─── */}
           {activeTab === 'subscription' && (
             <div className="space-y-6">
-              {/* Current Plan */}
               <div className="bg-paper-warm rounded-2xl border border-edge p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="text-sm text-ink-muted">Current Plan</div>
-                    <div className="text-xl font-bold text-ink mt-0.5">Free</div>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center shrink-0">
+                      <Crown className="w-5 h-5 text-amber" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-ink">Current Plan</div>
+                      <div className="text-xs text-ink-muted mt-0.5">You are on the <strong className="text-ink uppercase">{currentPlan}</strong> plan</div>
+                    </div>
                   </div>
-                  <div className="px-3 py-1 rounded-full bg-ink/5 border border-edge text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                  <div className="px-3 py-1 rounded-full bg-ink/5 border border-edge text-[10px] font-bold text-ink-muted uppercase tracking-wider">
                     Active
                   </div>
                 </div>
-                <div className="text-xs text-ink-muted space-y-1">
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-ink-muted" /> 50 messages per day</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-ink-muted" /> Basic AI model</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-ink-muted" /> Standard response speed</div>
-                </div>
-              </div>
 
-              {/* Pro Plan */}
-              <div className="relative rounded-2xl border-2 border-edge p-5 overflow-hidden bg-paper-warm">
-                <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-bold uppercase tracking-wider text-paper bg-ink">
-                  Recommended
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-5 h-5 text-brand-blue" />
-                  <div>
-                    <div className="text-xl font-bold text-ink">Pro</div>
-                    <div className="text-sm text-ink-muted">₹499/month</div>
-                  </div>
-                </div>
-                <div className="text-xs text-ink-soft space-y-1.5 mb-5">
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Unlimited messages</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Advanced AI model (GPT-4 level)</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Priority response speed</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Image generation</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Custom memory & personas</div>
-                  <div className="flex items-center gap-2"><Check className="w-3 h-3 text-brand-blue" /> Early access to new features</div>
-                </div>
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-paper bg-ink transition-all cursor-pointer hover:bg-ink-soft">
-                  <Crown className="w-4 h-4" />
-                  Upgrade to Pro
+                <button 
+                  onClick={() => {
+                    onClose()
+                    navigate('/subscription')
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-paper bg-ink transition-all cursor-pointer hover:bg-ink-soft"
+                >
+                  Upgrade Plan
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-
               <p className="text-[11px] text-ink-ghost text-center">
-                Subscriptions are managed securely. Cancel anytime from your account settings.
+                Subscriptions are managed securely. Cancel anytime.
               </p>
             </div>
           )}
