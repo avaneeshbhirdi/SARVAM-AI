@@ -29,12 +29,19 @@ import {
   Paperclip,
   Brain,
   Lock,
-  Zap
+  Zap,
+  Copy,
+  ThumbsUp,
+  ThumbsDown,
+  Share,
+  RotateCcw
 } from 'lucide-react'
 import Auth from './pages/Auth.jsx'
 import logoSvg from './assets/logo.svg'
 import { supabase } from './lib/supabase'
 import ProfileModal from './components/ProfileModal.jsx'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 /* ═══════════════════════════════════════════════════════════════════
    GENERATIVE CANVAS — Animated Wave Bars (Transient Senses inspired)
@@ -313,10 +320,17 @@ function TypingIndicator() {
 function ChatMessage({ message, index, userProfile, session }) {
   const isUser = message.role === 'user'
   const initial = (userProfile?.full_name || session?.user?.email || 'U').charAt(0).toUpperCase()
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <div
-      className={`${isUser ? 'animate-slide-right' : 'animate-slide-left'}`}
+      className={`group ${isUser ? 'animate-slide-right' : 'animate-slide-left'}`}
       style={{ animationDelay: `${index * 0.04}s`, opacity: 0 }}
     >
       <div className={`flex gap-4 py-5 ${isUser ? 'flex-row-reverse' : ''}`}>
@@ -344,15 +358,43 @@ function ChatMessage({ message, index, userProfile, session }) {
             {isUser ? 'You' : 'Sarvam'}
           </span>
           <div className={`mt-2 text-[15px] leading-[1.7] text-ink-soft whitespace-pre-wrap break-words ${
-            isUser ? 'font-medium text-ink' : ''
+            isUser ? 'font-medium text-ink' : 'markdown-body'
           }`}>
-            {message.content}
+            {isUser ? (
+              message.content
+            ) : (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            )}
           </div>
+          {!isUser && (
+            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button onClick={handleCopy} className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Copy">
+                {copied ? <Check className="w-4 h-4 text-teal" /> : <Copy className="w-4 h-4" />}
+              </button>
+              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Like">
+                <ThumbsUp className="w-4 h-4" />
+              </button>
+              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Dislike">
+                <ThumbsDown className="w-4 h-4" />
+              </button>
+              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Share">
+                <Share className="w-4 h-4" />
+              </button>
+              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Regenerate">
+                <RotateCcw className="w-4 h-4" />
+              </button>
+              <button className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="More">
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {!isUser && (
-        <div className="h-px bg-gradient-to-r from-transparent via-edge to-transparent ml-11" />
+        <div className="h-px bg-gradient-to-r from-transparent via-edge to-transparent ml-11 mt-2" />
       )}
     </div>
   )
@@ -422,7 +464,7 @@ function HeroSection({ onSuggestionClick }) {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-2xl mx-auto text-center">
+      <div className="relative z-10 w-full max-w-4xl mx-auto text-center">
         {/* Headline */}
         <div className="mb-10 animate-fade-up" style={{ opacity: 0, animationDelay: '0.1s' }}>
           <h1 className="text-[clamp(2.2rem,6vw,4.2rem)] font-display font-normal leading-[1.05] tracking-[-0.03em] text-ink mb-4">
@@ -504,7 +546,7 @@ function PromptInput({ value, onChange, onSubmit, isLoading }) {
   const tip = tips[tipIndex]
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-5 pb-5 sm:pb-6">
+    <div className="w-full max-w-4xl mx-auto px-5 pb-5 sm:pb-6">
       <div className={`relative rounded-2xl bg-card border transition-all duration-400 input-focus-ring ${
         value ? 'border-coral/30' : 'border-edge'
       }`}>
@@ -1082,7 +1124,7 @@ function Home() {
           <div className="flex-1 flex flex-col">
             {/* Messages */}
             <div className="flex-1 overflow-y-auto hide-scrollbar py-6">
-              <div className="max-w-2xl mx-auto px-4 sm:px-5">
+              <div className="max-w-4xl mx-auto px-4 sm:px-5">
                 {messages.map((msg, i) => (
                   <ChatMessage key={i} message={msg} index={i} userProfile={userProfile} session={session} />
                 ))}
