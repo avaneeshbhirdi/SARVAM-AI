@@ -5,6 +5,11 @@ import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables from .env or .env.local
 dotenv.config({ path: '.env.local' });
@@ -207,6 +212,14 @@ app.post('/api/verify-payment', async (req, res) => {
     console.error('Error verifying payment:', error);
     res.status(500).json({ error: 'An error occurred while verifying the payment.' });
   }
+});
+
+// Serve static files from the React frontend app
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Catch-all handler for React Router
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(port, () => {
