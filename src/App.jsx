@@ -317,11 +317,20 @@ function TypingIndicator() {
 /* ═══════════════════════════════════════════════════════════════════
    CHAT MESSAGE — Editorial style
    ═══════════════════════════════════════════════════════════════════ */
-function ChatMessage({ message, index, userProfile, session, onEdit, onRegenerate }) {
+function ChatMessage({ message, index, userProfile, session, onEditSubmit, onRegenerate }) {
   const isUser = message.role === 'user'
   const initial = (userProfile?.full_name || session?.user?.email || 'U').charAt(0).toUpperCase()
   const [copied, setCopied] = useState(false)
   const [rating, setRating] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState(message.content)
+
+  const handleEditSave = () => {
+    if (editValue.trim() && editValue.trim() !== message.content) {
+      onEditSubmit(index, editValue.trim())
+    }
+    setIsEditing(false)
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content)
@@ -359,9 +368,28 @@ function ChatMessage({ message, index, userProfile, session, onEdit, onRegenerat
           )}
           
           {isUser ? (
-            <div className="bg-paper-warm border border-edge rounded-3xl px-5 py-3 max-w-[85%] text-[15px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
-              {message.content}
-            </div>
+            isEditing ? (
+              <div className="bg-paper border border-coral/30 rounded-3xl p-4 max-w-[85%] w-full flex flex-col gap-3 shadow-sm focus-within:border-coral transition-colors">
+                <textarea
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  className="w-full bg-transparent resize-none outline-none text-[15px] leading-[1.6] text-ink min-h-[60px]"
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setIsEditing(false)} className="px-3 py-1.5 rounded-full text-xs font-medium text-ink-muted hover:bg-paper-warm transition-colors cursor-pointer">
+                    Cancel
+                  </button>
+                  <button onClick={handleEditSave} disabled={!editValue.trim() || editValue.trim() === message.content} className="px-3 py-1.5 rounded-full text-xs font-medium bg-ink text-paper hover:bg-ink-soft transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                    Save & Submit
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-paper-warm border border-edge rounded-3xl px-5 py-3 max-w-[85%] text-[15px] leading-[1.6] text-ink whitespace-pre-wrap break-words">
+                {message.content}
+              </div>
+            )
           ) : (
             <div className="mt-2 text-[15px] leading-[1.7] text-ink-soft break-words markdown-body">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -371,14 +399,16 @@ function ChatMessage({ message, index, userProfile, session, onEdit, onRegenerat
           )}
 
           {isUser ? (
-            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 mr-2">
-              <button onClick={handleCopy} className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Copy prompt">
-                {copied ? <Check className="w-4 h-4 text-teal" /> : <Copy className="w-4 h-4" />}
-              </button>
-              <button onClick={() => onEdit(message.content)} className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Edit prompt">
-                <Pencil className="w-4 h-4" />
-              </button>
-            </div>
+            !isEditing && (
+              <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 mr-2">
+                <button onClick={handleCopy} className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Copy prompt">
+                  {copied ? <Check className="w-4 h-4 text-teal" /> : <Copy className="w-4 h-4" />}
+                </button>
+                <button onClick={() => { setIsEditing(true); setEditValue(message.content); }} className="p-2 rounded-full text-ink-muted bg-paper border border-transparent hover:border-edge hover:text-ink transition-colors cursor-pointer shadow-sm" title="Edit prompt">
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
+            )
           ) : (
             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button onClick={handleCopy} className="p-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer" title="Copy">
@@ -1002,7 +1032,7 @@ function Home() {
     if (window.innerWidth < 768) setIsSidebarOpen(false)
   }
 
-  const sendMessage = useCallback(async (text) => {
+  const sendMessage = useCallback(async (text, overrideHistory = null) => {
     const trimmed = text.trim()
     if (!trimmed || isLoading) return
 
@@ -1010,10 +1040,11 @@ function Home() {
     setIsLoading(true)
     
     let currentChatId = activeChatId
+    const baseHistory = overrideHistory || messages
     
     // Optimistic UI
     const newUserMsg = { role: 'user', content: trimmed, created_at: new Date().toISOString() }
-    setMessages((prev) => [...prev, newUserMsg])
+    setMessages([...baseHistory, newUserMsg])
 
     try {
       if (!currentChatId && session?.user) {
@@ -1034,6 +1065,14 @@ function Home() {
 
       // Save user message to DB
       if (currentChatId && session?.user) {
+        if (overrideHistory) {
+          const lastMsg = overrideHistory[overrideHistory.length - 1]
+          if (lastMsg?.created_at) {
+            await supabase.from('messages').delete().eq('chat_id', currentChatId).gt('created_at', lastMsg.created_at)
+          } else if (overrideHistory.length === 0) {
+            await supabase.from('messages').delete().eq('chat_id', currentChatId)
+          }
+        }
         await supabase.from('messages').insert({ chat_id: currentChatId, role: 'user', content: trimmed })
       }
 
@@ -1045,7 +1084,7 @@ function Home() {
         },
         body: JSON.stringify({
           message: trimmed,
-          history: messages.map(msg => ({ role: msg.role, content: msg.content }))
+          history: baseHistory.map(msg => ({ role: msg.role, content: msg.content }))
         })
       });
 
@@ -1143,14 +1182,15 @@ function Home() {
                     index={i} 
                     userProfile={userProfile} 
                     session={session} 
-                    onEdit={(content) => {
-                      setInput(content)
-                      document.getElementById('main-prompt-input')?.focus()
+                    onEditSubmit={(msgIndex, newContent) => {
+                      const newHistory = messages.slice(0, msgIndex)
+                      sendMessage(newContent, newHistory)
                     }}
                     onRegenerate={() => {
-                      const userMsg = messages.slice(0, i).reverse().find(m => m.role === 'user')
-                      if (userMsg) {
-                        sendMessage(userMsg.content)
+                      const userMsgIndex = messages.slice(0, i).map(m => m.role).lastIndexOf('user')
+                      if (userMsgIndex !== -1) {
+                        const newHistory = messages.slice(0, userMsgIndex)
+                        sendMessage(messages[userMsgIndex].content, newHistory)
                       }
                     }}
                   />
